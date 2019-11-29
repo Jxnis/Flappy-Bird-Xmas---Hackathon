@@ -5,6 +5,10 @@ import Pipe from './Pipe';
 
 let pipes = 0;
 
+export const resetPipes = () => {
+  pipes = 0;
+}
+
 export const randomBetween = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
@@ -43,11 +47,11 @@ export const addPipesAtLocation = (x, world, entities) => {
   Matter.World.add(world, [pipe1, pipe2]);
 
   entities["pipe" + (pipes + 1)] = {
-      body: pipe1, renderer: Pipe
+      body: pipe1, renderer: Pipe, scored: false
   }
 
   entities["pipe" + (pipes + 2)] = {
-    body: pipe2, renderer: Pipe
+    body: pipe2, renderer: Pipe, scored: false
 }
 
 pipes += 2;
@@ -55,7 +59,7 @@ pipes += 2;
 }
 
 
-const Physics = (entities, { touches, time }) => {
+const Physics = (entities, { touches, time, dispatch }) => {
     let engine = entities.physics.engine;
     let world = entities.physics.world;
     let santa = entities.santa.body;
@@ -83,8 +87,15 @@ const Physics = (entities, { touches, time }) => {
     Matter.Engine.update(engine, time.delta);
 
     Object.keys(entities).forEach(key => {
-        if (key.indexOf("pipe") === 0){
+        if (key.indexOf("pipe") === 0 && entities.hasOwnProperty(key)){
           Matter.Body.translate(entities[key].body, {x: -2, y: 0});
+
+          if (key.indexOf("pipe") !== -1 && parseInt(key.replace("pipe", "")) % 2 === 0){
+            if (entities[key].body.position.x <= santa.position.x && !entities[key].scored){
+                entities[key].scored = true;
+              dispatch({ type: "score"});
+            }
+          }
 
           if (key.indexOf("pipe") !== -1 && parseInt(key.replace("pipe", "")) % 2 === 0) {
             if (entities[key].body.position.x <= -1 * (Constants.PIPE_WIDTH / 2)){
@@ -95,7 +106,7 @@ const Physics = (entities, { touches, time }) => {
               delete(entities["pipe" + pipeIndex]);
 
               addPipesAtLocation((Constants.MAX_WIDTH  * 2)- (Constants.PIPE_WIDTH / 2), world, entities);
-              
+
             }
           }
 

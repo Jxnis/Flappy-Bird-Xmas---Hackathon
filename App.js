@@ -4,7 +4,7 @@ import Constants from './Constants';
 import { GameEngine } from 'react-native-game-engine';
 import Matter from 'matter-js';
 import Santa from './Santa.js';
-import Physics from './Physics.js';
+import Physics, { resetPipes } from './Physics.js';
 import Pipe from './Pipe.js';
 import Floor from './Floor';
 import Images from './assets/Images';
@@ -17,7 +17,8 @@ export default class App extends Component {
       this.entities = this.setupWorld();
       
       this.state = {
-          running: true 
+          running: true,
+          score: 0, 
       }
     }
   
@@ -67,14 +68,20 @@ export default class App extends Component {
       if (e.type === "game-over") {
         this.setState({
           running: false
+        });
+      } else if (e.type === "score") {
+        this.setState({
+          score: this.state.score + 1
         })
       }
     }
 
     reset = () => {
+      resetPipes();
       this.GameEngine.swap(this.setupWorld());
       this.setState({
-          running: true
+          running: true,
+          score: 0
       });
 
     }
@@ -92,9 +99,11 @@ export default class App extends Component {
           entities={this.entities} >
           <StatusBar hidden={true} />
       </GameEngine>
+      <Text style={styles.score}>{this.state.score}</Text>
       {!this.state.running && <TouchableOpacity onPress={this.reset} style={styles.fullScreenButton}>
           <View style={styles.fullScreen}>
               <Text style={styles.gameOverText}>Game Over</Text>
+              <Text style={styles.gameOverSubText}>You ruined Xmas! Try again and save it!</Text>
           </View>
       </TouchableOpacity>}
     </View>
@@ -147,8 +156,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center'
   },
+
+    score: {
+      position: 'absolute',
+      color: 'white',
+      fontSize: 72,
+      top: 50,
+      left: Constants.MAX_WIDTH / 2 -20,
+      textShadowColor: '#444444',
+      textShadowOffset: { width: 2, height: 2},
+      textShadowRadius: 2
+  },
+
   gameOverText: {
     color: 'white',
     fontSize: 48
+  },
+
+  gameOverSubText: {
+    color: 'white',
+    fontSize: 24
   }
 });
