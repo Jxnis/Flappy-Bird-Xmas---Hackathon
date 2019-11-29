@@ -85,7 +85,22 @@ const Physics = (entities, { touches, time }) => {
     Object.keys(entities).forEach(key => {
         if (key.indexOf("pipe") === 0){
           Matter.Body.translate(entities[key].body, {x: -2, y: 0});
-        } else if (key.indexOf("floor") === 0) {
+
+          if (key.indexOf("pipe") !== -1 && parseInt(key.replace("pipe", "")) % 2 === 0) {
+            if (entities[key].body.position.x <= -1 * (Constants.PIPE_WIDTH / 2)){
+              let pipeIndex = parseInt(key.replace("pipe", ""));
+              delete(entities["pipe" + (pipeIndex - 1) + "pipe"]);
+              delete(entities["pipe" + (pipeIndex - 1)]);
+              delete(entities["pipe" + pipeIndex + "pipe"]);
+              delete(entities["pipe" + pipeIndex]);
+
+              addPipesAtLocation((Constants.MAX_WIDTH  * 2)- (Constants.PIPE_WIDTH / 2), world, entities);
+              
+            }
+          }
+
+
+        } else if (key.indexOf("floor") === 0) {  
             if (entities[key].body.position.x <= -1 * Constants.MAX_WIDTH / 2) {
                 Matter.Body.setPosition(entities[key].body, { x: Constants.MAX_WIDTH + (Constants.MAX_WIDTH / 2), y: entities[key].body.position.y})
             } else {
