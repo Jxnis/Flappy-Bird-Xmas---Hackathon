@@ -1,5 +1,59 @@
 import Matter from 'matter-js';
 import Constants from './Constants';
+import Pipe from './Pipe';
+
+
+let pipes = 0;
+
+export const randomBetween = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+export const generatePipes = () => {
+  let topPipeHeight = randomBetween(100, (Constants.MAX_HEIGHT / 2) - 100);
+  let bottomPipeHeight = Constants.MAX_HEIGHT - topPipeHeight - Constants.GAP_SIZE;
+
+  let sizes = [topPipeHeight, bottomPipeHeight];
+
+  if (Math.random() < 0.5) {
+    sizes = sizes.reverse();
+  }
+  return sizes;
+}
+
+export const addPipesAtLocation = (x, world, entities) => {
+  let [pipe1Height, pipe2Height] = generatePipes();
+
+  let pipe1 = Matter.Bodies.rectangle(
+    x,
+    pipe1Height / 2,
+    Constants.PIPE_WIDTH,
+    pipe1Height,
+    { isStatic: true }
+  );
+
+  let pipe2 = Matter.Bodies.rectangle(
+    x,
+    Constants.MAX_HEIGHT - 50 - (pipe2Height / 2),
+    Constants.PIPE_WIDTH,
+    pipe2Height,
+    { isStatic: true }
+  );
+
+  Matter.World.add(world, [pipe1, pipe2]);
+
+  entities["pipe" + (pipes + 1)] = {
+      body: pipe1, renderer: Pipe
+  }
+
+  entities["pipe" + (pipes + 2)] = {
+    body: pipe2, renderer: Pipe
+}
+
+pipes += 2;
+
+}
+
 
 const Physics = (entities, { touches, time }) => {
     let engine = entities.physics.engine;
@@ -11,6 +65,10 @@ const Physics = (entities, { touches, time }) => {
         if (!hadTouches) {
             if (world.gravity.y === 0.0){
                 world.gravity.y = 1.2;
+
+                addPipesAtLocation((Constants.MAX_WIDTH  * 2)- (Constants.PIPE_WIDTH / 2), world, entities);
+                addPipesAtLocation((Constants.MAX_WIDTH  * 3)- (Constants.PIPE_WIDTH / 2), world, entities);
+
             }
 
             hadTouches = true;
@@ -25,7 +83,9 @@ const Physics = (entities, { touches, time }) => {
     Matter.Engine.update(engine, time.delta);
 
     Object.keys(entities).forEach(key => {
-        if (key.indexOf("floor") === 0) {
+        if (key.indexOf("pipe") === 0){
+          Matter.Body.translate(entities[key].body, {x: -2, y: 0});
+        } else if (key.indexOf("floor") === 0) {
             if (entities[key].body.position.x <= -1 * Constants.MAX_WIDTH / 2) {
                 Matter.Body.setPosition(entities[key].body, { x: Constants.MAX_WIDTH + (Constants.MAX_WIDTH / 2), y: entities[key].body.position.y})
             } else {
